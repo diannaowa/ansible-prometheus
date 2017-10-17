@@ -20,9 +20,9 @@ spec:
         component: prom-kafka
     spec:
       containers:
-      - image: go-nexus:5000/prom/prometheus-kafka-consumer-group-exporter:0.2.0
+      - image: duizhang/prometheus-kafka-consumer-group-exporter:0.2.0
         name: prom-kafka
-        args: ["-b", "10.202.129.111:9093,10.202.129.182:9093,10.202.129.220:9093"]
+        args: ["-b", "xxx:9093,xxx:9093,xxx:9093"]
         ports:
         - name: prom-kafka
           containerPort: 9208

@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       #- image: oliver006/redis_exporter
-      - image: go-nexus:5000/prom/redis_exporter
+      - image: prom/redis_exporter
         name: prom-redis
         env:
         - name: REDIS_ADDR

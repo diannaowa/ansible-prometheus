@@ -17,7 +17,7 @@ spec:
         component: prom-mongodb
     spec:
       containers:
-      - image: go-nexus:5000/prom/prometheus-mongodb-sharding-exporter
+      - image: duizhang/prometheus-mongodb-sharding-exporter
         name: prom-mongodb
         env:
         - name: MONGO_URI
