@@ -18,7 +18,7 @@ spec:
         pod.beta.kubernetes.io/init-containers: '[
             {
                 "name": "check-am01",
-                "image": "go-nexus:5000/prom/busybox:20170703",
+                "image": "prom/busybox:20170703",
                 "command": ["sh", "-c", "until ping am-node01-0.am-service-01 -c 1; do sleep 3; done;"]
             }
         ]'
@@ -27,7 +27,7 @@ spec:
         - name: go-nexus
       containers:
       - name: am-node02
-        image: go-nexus:5000/prom/alertmanager:v0.7.1
+        image: prom/alertmanager:v0.7.1
         #image: prom/alertmanager:v0.6.2
         args:
           - '-config.file=/etc/prometheus/alertmanager.conf'
