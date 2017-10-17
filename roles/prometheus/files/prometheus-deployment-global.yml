@@ -1,0 +1,69 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prometheus-global
+  namespace: monitoring
+  labels:
+    app: prometheus
+    component: core
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: prometheus-global
+      labels:
+        app: prometheus
+        component: core
+    spec:
+      imagePullSecrets:
+        - name: go-nexus
+      containers:
+      - name: prometheus
+        #image: prom/prometheus:v1.6.1
+        image: prom/prometheus:v1.7.1
+        args:
+          - '-storage.local.retention=24h'
+          - '-config.file=/etc/prometheus/prometheus.yml'
+          - '-storage.local.target-heap-size=3221225472'
+          - '-query.max-concurrency=40'
+          - '-query.timeout=30s'
+          - '-storage.local.path=global'
+          - '-alertmanager.url=http://am-node01-0.am-service-01:9093,http://am-node02-0.am-service-02:9093,http://am-node03-0.am-service-03:9093'
+        ports:
+        - name: webui
+          containerPort: 9090
+        resources:
+          requests:
+            #cpu: 500m
+            memory: 5G
+          limits:
+            #cpu: 500m
+            memory: 5G
+        env:
+        - name: TZ
+          value: Asia/Chongqing
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus
+        - name: alert-rules
+          mountPath: /etc/alertmanager
+        - name: data-dir
+          mountPath: /prometheus
+
+        - name: record-rules
+          mountPath: /etc/prom-record
+      volumes:
+      - name: config-volume
+        configMap:
+          name: prometheus-configmap-global
+      - name: alert-rules
+        configMap:
+          name: alert-rules
+      - name: record-rules
+        configMap:
+          name: record-rules
+      - name: data-dir
+        persistentVolumeClaim:
+          claimName: prometheus-pvc
+      nodeSelector:
+        app: prometheus

@@ -1,0 +1,22 @@
+---
+
+- name: "create exporter docker-compose directory"
+  file: path=/opt/node-exporter/ state=directory
+
+
+- name: "Install node-exporter docker-compose"
+  template: src=node-exporter-docker-compose.yml dest=/opt/node-exporter/docker-compose.yml owner=root group=root mode=0644
+  become: yes
+
+
+- name: "Install node-exporter service"
+  template: src=node-exporter.service dest=/etc/systemd/system/node-exporter.service owner=root group=root mode=0644
+  become: yes
+
+
+- name: "Start node-exporter service"
+  systemd:
+    name: node-exporter
+    daemon_reload: yes
+    state: restarted
+    enabled: yes

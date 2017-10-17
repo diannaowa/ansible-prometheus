@@ -1,0 +1,56 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: hostjobcount
+  namespace: monitoring
+  labels:
+    app: hostjobcount
+    component: hostjobcount
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: hostjobcount
+      labels:
+        app: hostjobcount
+        component: hostjobcount
+    spec:
+      containers:
+      - image: go-nexus:5000/prom/prometheus-hostjobcount-exporter:1.0
+        name: hostjobcount
+        env:
+        - name: MONGO_HOST
+          value: {%for h in groups["mongodb-mongos"]%}{{h}}:27017{% if loop.index != groups['mongodb-mongos']|length %},{%endif%}{%endfor%}
+        - name: DB_NAMESPACE
+          value: "{{dfb_namespace}}"
+
+        ports:
+        - name: hostjobcount
+          containerPort: 8000
+      imagePullSecrets:
+      - name: go-nexus
+      nodeSelector:
+        app: prometheus
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  name: hostjobcount
+  namespace: monitoring
+  labels:
+    app: hostjobcount
+    component: hostjobcount
+spec:
+  clusterIP: None
+  ports:
+    - name: hostjobcount
+      port: 8000
+      protocol: TCP
+  selector:
+    app: hostjobcount
+    component: hostjobcount
+  type: ClusterIP

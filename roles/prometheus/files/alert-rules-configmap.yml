@@ -1,0 +1,77 @@
+apiVersion: v1
+data:
+  alert.rules: |
+    # ALERT InstanceHighCpu
+    # IF 100-(avg by (instance) (irate(node_cpu{mode="idle"}[5m]))*100) > 60
+    # FOR 10m LABELS {serverity = "page"}
+    # ANNOTATIONS {
+    #   summary = "Instance {{$labels.instance}}: cpu high",
+    #   description = "{{$labels.instance}} has high cpu activity"
+    # }
+
+    ALERT HighCPU
+      IF ((sum(node_cpu{mode=~"user|nice|system|irq|softirq|steal|idle|iowait"}) by (instance, job)) - ( sum(node_cpu{mode=~"idle|iowait"}) by (instance,job) )   )   /  (sum(node_cpu{mode=~"user|nice|system|irq|softirq|steal|idle|iowait"}) by (instance, job)) * 100 > 95
+      FOR 10m
+      LABELS { service = "page" }
+      ANNOTATIONS {
+        summary = "High CPU Usage",
+        description = "This machine  has really high CPU usage for over 10m",
+    }
+
+    ALERT InstanceLowMemory
+    IF node_memory_MemAvailable < 268435456
+    FOR 10m
+    LABELS {serverity = "page"}
+    ANNOTATIONS {
+      summary = "Instance {{$labels.instance}}: memory low",
+      description = "{{$labels.instance}} has less than 256M memory available"
+    }
+
+    ALERT InstalceLowDisk
+    IF node_filesystem_avail{mountpoint="/etc/hosts"} < 5368709120
+    FOR 10m LABELS {serverity = "page"}
+    ANNOTATIONS {
+      summary = "Instance {{$labels.instance}}: low disk space",
+      description = "{{$labels.instance}} has less than 5G space"
+    }
+
+    # ALERT HpaTrigger
+    # IF sum by (namespace) (sum_over_time(pod_agent_active_task_count[10m]))/count_scalar(pod_agent_active_task_count) / 60 > 3
+    # FOR 1m LABELS {serverity = "page",trigger="hpa",action = "scale-out", pod_count="5", deployment="agent", namespace = "{{$labels.namespace}}"}
+    # ANNOTATIONS {
+    #   summary = "Instance {{$labels.namespace}}: scale-out",
+    #   description = "{{$labels.namespace}} auto scale-out,value:{{$value}}"
+    # }
+    #
+    # ALERT HpaTriggerI
+    # IF sum by (namespace) (sum_over_time(pod_agent_active_task_count[10m]))/count_scalar(pod_agent_active_task_count) / 60 == 0
+    # FOR 20m LABELS {serverity = "page",trigger="hpa",action = "scale-in", deployment="agent", pod_count="2", namespace = "{{$labels.namespace}}"}
+    # ANNOTATIONS {
+    #   summary = "Instance {{$labels.namespace}}: scale-in",
+    #   description = "{{$labels.namespace}} auto scale-in,value: {{$value}}"
+    # }
+
+
+    ALERT MongoDBNotHealth
+    IF mongodb_replset_member_health == 0
+    FOR 2m
+    LABELS {serverity = "page"}
+    ANNOTATIONS {
+      summary = "MongoDB {{$labels.name}} is not health",
+      description = "MongoDB {{$labels.name}} is not health:{{$labels.set}} {{$labels.state}}"
+    }
+
+    # ALERT NodeIsUnreachable
+    # IF up == 0
+    # FOR 5s
+    # LABELS {serverity = "page"}
+    # ANNOTATIONS {
+    #   summary = "Node {{$labels.instance}} is unreachable",
+    #   description = "Node {{$labels.instance}} is unreachable for 20s."
+    # }
+
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: alert-rules
+  namespace: monitoring

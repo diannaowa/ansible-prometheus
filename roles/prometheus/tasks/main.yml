@@ -1,0 +1,36 @@
+---
+
+- name: "delete prometheus tmp directory"
+  file: path=/tmp/prometheus state=absent
+  when: "ansible_ssh_host == groups['k8s-master'][0]"
+
+- name: "create prometheus tmp directory"
+  file: path=/tmp/prometheus state=directory
+  when: "ansible_ssh_host == groups['k8s-master'][0]"
+
+- name: "upload mainfests"
+  copy: src={{ item }} dest=/tmp/prometheus/
+  with_items: "{{ lookup('pipe', 'find {{role_path}}/files/ -type f').split('\n') }}"
+  when: "ansible_ssh_host == groups['k8s-master'][0]"
+
+- name: "upload prometheus configmap & service"
+  template: src={{item}} dest=/tmp/prometheus/
+  with_items: "{{ lookup('pipe', 'find {{role_path}}/templates/ -type f').split('\n') }}"
+  when: "ansible_ssh_host == groups['k8s-master'][0]"
+
+- shell: ls /tmp/prometheus/*.yml
+  register: prometheus_mainfests
+  when: "ansible_ssh_host == groups['k8s-master'][0]"
+
+- name: "Create prometheus(monitoring) namespace"
+  shell: "kubectl --server={{groups['k8s-master'][0]}}:8080 create namespace monitoring"
+  when: "ansible_ssh_host == groups['k8s-master'][0]"
+
+- name: "Create secrets for namespace"
+  shell: "kubectl --server={{groups['k8s-master'][0]}}:8080 create secret docker-registry go-nexus --docker-server=go-nexus:5000 --docker-username={{docker_login_user}} --docker-password={{docker_login_password}} --docker-email={{docker_login_email}} --namespace=monitoring"
+  when: "ansible_ssh_host == groups['k8s-master'][0]"
+
+- name: "Create prometheus mainfests"
+  shell: "kubectl --server={{groups['k8s-master'][0]}}:8080 apply -f {{item}}"
+  with_items: "{{prometheus_mainfests.stdout_lines}}"
+  when: "ansible_ssh_host == groups['k8s-master'][0]"

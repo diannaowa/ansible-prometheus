@@ -1,0 +1,54 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prom-mongodb
+  namespace: monitoring
+  labels:
+    app: prom-mongodb
+    component: prom-mongodb
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: prom-mongodb
+      labels:
+        app: prom-mongodb
+        component: prom-mongodb
+    spec:
+      containers:
+      - image: go-nexus:5000/prom/prometheus-mongodb-sharding-exporter
+        name: prom-mongodb
+        env:
+        - name: MONGO_URI
+          value: mongodb://{%for h in groups["mongodb-mongos"]%}{{h}}:27017{% if loop.index != groups['mongodb-mongos']|length %},{%endif%}{%endfor%}
+
+        ports:
+        - name: prom-mongodb
+          containerPort: 8000
+      imagePullSecrets:
+      - name: go-nexus
+      nodeSelector:
+        app: prometheus
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  name: prom-mongodb
+  namespace: monitoring
+  labels:
+    app: prom-mongodb
+    component: prom-mongodb
+spec:
+  clusterIP: None
+  ports:
+    - name: prom-mongodb
+      port: 8000
+      protocol: TCP
+  selector:
+    app: prom-mongodb
+    component: prom-mongodb
+  type: ClusterIP

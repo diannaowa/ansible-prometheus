@@ -1,0 +1,21 @@
+- name: "create exporter template directory"
+  file: path=/tmp/prom-exporter/ state="{{item}}"
+  with_items:
+    - [ 'absent','directory']
+
+- name: "Get all exporter template file"
+  shell: "ls {{role_path}}/templates/deployment/*"
+  register: exporter_tem
+  delegate_to: 127.0.0.1
+
+- name: "upload exporter template"
+  template: src="{{ item }}" dest=/tmp/prom-exporter/ mode=0600
+  with_items:
+    - "{{exporter_tem.stdout_lines}}"
+
+- shell: ls /tmp/prom-exporter/*.yml
+  register: exporter_path
+
+- name: "Create prometheus exporter"
+  shell: "kubectl --server={{groups['k8s-master'][0]}}:8080 apply -f {{item}}"
+  with_items: "{{exporter_path.stdout_lines}}"

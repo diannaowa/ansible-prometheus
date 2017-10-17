@@ -1,0 +1,44 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kube-state-metrics-deployment
+  namespace: monitoring
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kube-state-metrics
+        version: "v0.4.0"
+    spec:
+      imagePullSecrets:
+        - name: go-nexus
+      containers:
+      - name: kube-state-metrics
+        #image: gcr.io/google_containers/kube-state-metrics:v0.4.0
+        image: prom/kube-state-metrics:v0.4.0
+        ports:
+        - containerPort: 8080
+        env:
+          - name: TZ
+            value: Asia/Chongqing
+      nodeSelector:
+        app: prometheus
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  name: kube-state-metrics
+  namespace: monitoring
+  labels:
+    app: kube-state-metrics
+spec:
+  ports:
+  - name: kube-state-metrics
+    port: 8080
+    protocol: TCP
+  selector:
+    app: kube-state-metrics

@@ -1,0 +1,11 @@
+[Unit]
+Description=start node-exporter always
+After=network.target docker.service
+
+[Service]
+ExecStart=/usr/bin/docker-compose -f /opt/node-exporter/docker-compose.yml up
+ExecStop=/usr/bin/docker-compose -f /opt/node-exporter/docker-compose.yml down
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

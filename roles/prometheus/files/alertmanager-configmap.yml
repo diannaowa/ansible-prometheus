@@ -1,0 +1,37 @@
+apiVersion: v1
+data:
+  alertmanager.conf: |
+    global:
+    route:
+      receiver: 'email-gocd'
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+      # routes:
+      # - receiver: 'auto-hpa'
+      #   group_wait: 1s
+      #   group_interval: 1s
+      #   repeat_interval: 1s
+      #   match:
+      #     trigger: hpa
+    receivers:
+    - name: 'email-gocd'
+      email_configs:
+      - to: xxxxx
+        from: xxxxxx
+        smarthost: smtp.gmail.com:587
+        auth_username: "xxxxx"
+        auth_identity: "xxxx"
+        auth_password: "xxxx"
+        require_tls: true
+    #  - name: "auto-hpa"
+    #    webhook_configs:
+    #    - url: 'http://hpa-manager:5000/hpa'
+    #      send_resolved: false
+
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: alertmanager-conf
+  namespace: monitoring

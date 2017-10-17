@@ -1,0 +1,71 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prometheus-server-endpoints
+  namespace: monitoring
+  labels:
+    app: prometheus-server-endpoints
+    component: core
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: prometheus-server-endpoints
+      labels:
+        app: prometheus-server-endpoints
+        component: core
+    spec:
+      imagePullSecrets:
+        - name: go-nexus
+      containers:
+      - name: prometheus-server-endpoints
+        #image: prom/prometheus:v1.6.1
+        image: prom/prometheus:v1.7.1
+        args:
+          - '-storage.local.retention=24h'
+        #  - '-storage.local.memory-chunks=500000'
+          - '-config.file=/etc/prometheus/prometheus.yml'
+          - '-storage.local.target-heap-size=3221225472'
+          - '-query.max-concurrency=40'
+          - '-query.timeout=30s'
+          - '-storage.local.path=endpoints'
+        #  - '-alertmanager.url=http://alertmanager:9093'
+          - '-alertmanager.url=http://am-node01-0.am-service-01:9093,http://am-node02-0.am-service-02:9093,http://am-node03-0.am-service-03:9093'
+        ports:
+        - name: webui
+          containerPort: 9090
+        resources:
+          requests:
+            #cpu: 500m
+            memory: 3G
+          limits:
+            #cpu: 500m
+            memory: 3G
+        env:
+        - name: TZ
+          value: Asia/Chongqing
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus
+        - name: alert-rules
+          mountPath: /etc/alertmanager
+        - name: data-dir
+          mountPath: /prometheus
+
+        - name: record-rules
+          mountPath: /etc/prom-record
+      volumes:
+      - name: config-volume
+        configMap:
+          name: prometheus-configmap-endpoints
+      - name: alert-rules
+        configMap:
+          name: alert-rules
+      - name: record-rules
+        configMap:
+          name: record-rules
+      - name: data-dir
+        persistentVolumeClaim:
+          claimName: prometheus-pvc
+      nodeSelector:
+        app: prometheus

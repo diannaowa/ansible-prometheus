@@ -1,0 +1,9 @@
+version: '2'
+services:
+  node-exporter:
+    image: go-nexus:5000/prom/node-exporter:0.12.0
+    restart: always
+    network_mode: "host"
+    pid: "host"
+    environment:
+        TZ: Asia/Chongqing

@@ -1,0 +1,56 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prom-redis
+  namespace: monitoring
+  labels:
+    app: prom-redis
+    component: prom-redis
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: prom-redis
+      labels:
+        app: prom-redis
+        component: prom-redis
+    spec:
+      containers:
+      #- image: oliver006/redis_exporter
+      - image: go-nexus:5000/prom/redis_exporter
+        name: prom-redis
+        env:
+        - name: REDIS_ADDR
+          #TODO Change redis host ip
+          value: redis://redis-service-01.performance.svc.cluster.local:6379
+
+        ports:
+        - name: prom-redis
+          containerPort: 9121
+      imagePullSecrets:
+      - name: go-nexus
+      nodeSelector:
+        app: prometheus
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  name: prom-redis
+  namespace: monitoring
+  labels:
+    app: prom-redis
+    component: prom-redis
+spec:
+  clusterIP: None
+  ports:
+    - name: prom-redis
+      port: 9121
+      protocol: TCP
+  selector:
+    app: prom-redis
+    component: prom-redis
+  type: ClusterIP

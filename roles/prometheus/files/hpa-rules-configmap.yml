@@ -1,0 +1,119 @@
+apiVersion: v1
+data:
+  alert.rules: |
+
+    ALERT HPAJob
+    IF sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="jobServcie_buildEvent"}[1m])) by (topic) >= 1.2
+    FOR 10s
+    LABELS {serverity = "page",trigger="hpa",action = "scale_out", deployment="job", namespace = "prod",weight="1",interval="180",desired="1",max="10",min="2"}
+    ANNOTATIONS {
+      summary = "Instance prod: scale-out",
+      description = "prod auto scale-out,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+    ALERT HPAJobIn
+    IF sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="jobServcie_buildEvent"}[1m])) by (topic) <=1
+    AND sum( kafka_topic_highwater{topic!="__consumer_offsets"} ) by (topic) - on(topic) sum(kafka_consumer_group_offset{group="jobServcie_buildEvent"}) by (topic) <= 40
+    FOR 30m
+    LABELS {serverity = "page",trigger="hpa",action = "scale_in", deployment="job", namespace = "prod",weight="1",interval="180",desired="0.8",min="2",max="10"}
+    ANNOTATIONS {
+      summary = "Instance prod: scale-in",
+      description = "prod auto scale-in,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+
+    ALERT HPAExecutor
+    IF sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="executorService_taskEvent"}[1m])) by (topic) >= 1.2
+    FOR 10s
+    LABELS {serverity = "page",trigger="hpa",action = "scale_out", deployment="executor", namespace = "prod",weight="1",interval="180",desired="1",max="10",min="2"}
+    ANNOTATIONS {
+      summary = "Instance prod: scale-out",
+      description = "prod auto scale-out,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+    ALERT HPAExecutorIn
+    IF sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="executorService_taskEvent"}[1m])) by (topic) <=1
+    AND sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) - on(topic) sum(rate(kafka_consumer_group_offset{group="executorService_taskEvent"}[1m])) by (topic) <= 40
+    FOR 30m
+    LABELS {serverity = "page",trigger="hpa",action = "scale_in", deployment="executor", namespace = "prod",weight="1",interval="180",desired="0.8",min="2",max="10"}
+    ANNOTATIONS {
+      summary = "Instance prod: scale-in",
+      description = "prod auto scale-in,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+
+    ALERT HPAScheduler
+    IF sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="schedulerService_stepEvent"}[1m])) by (topic) >= 1.2
+    FOR 10s
+    LABELS {serverity = "page",trigger="hpa",action = "scale_out", deployment="scheduler", namespace = "prod",weight="1",interval="180",desired="1",max="10",min="2"}
+    ANNOTATIONS {
+      summary = "Instance prod: scale-out",
+      description = "prod auto scale-out,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+    ALERT HPASchedulerIn
+    IF sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="schedulerService_stepEvent"}[1m])) by (topic) <= 1
+    AND sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) - on(topic) sum(rate(kafka_consumer_group_offset{group="schedulerService_stepEvent"}[1m])) by (topic) <= 40
+    FOR 30m
+    LABELS {serverity = "page",trigger="hpa",action = "scale_in", deployment="scheduler", namespace = "prod",weight="1",interval="180",desired="0.8",min="2",max="10"}
+    ANNOTATIONS {
+      summary = "Instance prod: scale-in",
+      description = "prod auto scale-in,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+
+    ALERT HPAtimeout
+    IF sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="timeoutService_cancellationEvent"}[1m])) by (topic) >= 1.2
+    OR sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="timeoutService_heartbeatEvent"}[1m])) by (topic) >= 1.2
+    FOR 10s
+    LABELS {serverity = "page",trigger="hpa",action = "scale_out", deployment="timeout", namespace = "prod",weight="1",interval="180",desired="1",max="10",min="2"}
+    ANNOTATIONS {
+      summary = "Instance prod: scale-out",
+      description = "prod auto scale-out,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+    ALERT HPATimeoutIn
+    IF (sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="timeoutService_cancellationEvent"}[1m])) by (topic) <=1 OR sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) / on(topic) sum(rate(kafka_consumer_group_offset{group="timeoutService_heartbeatEvent"}[1m])) by (topic) <=1)
+    AND (sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) - on(topic) sum(rate(kafka_consumer_group_offset{group="timeoutService_cancellationEvent"}[1m])) by (topic) <=40 OR sum( rate(kafka_topic_highwater{topic!="__consumer_offsets"}[1m]) ) by (topic) - on(topic) sum(rate(kafka_consumer_group_offset{group="timeoutService_heartbeatEvent"}[1m])) by (topic) <=40)
+    FOR 30m
+    LABELS {serverity = "page",trigger="hpa",action = "scale_in", deployment="timeout", namespace = "prod",weight="1",interval="180",desired="0.8",min="2",max="10"}
+    ANNOTATIONS {
+      summary = "Instance prod: scale-in",
+      description = "prod auto scale-in,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+
+    ALERT HPAagent
+    IF sum(agent_reject_job_num) by (resourcepool) / on(resourcepool) count(pod_agent_active_task_count) by (resourcepool) >= 1.5
+    AND sum(pod_agent_active_task_count) by (resourcepool) / on(resourcepool) count(pod_agent_active_task_count) by (resourcepool) >= 0.8
+    FOR 10s
+    LABELS {serverity = "page",app="agent",trigger="hpa",action = "scale_out", deployment="{{$labels.resourcepool}}", namespace = "prod",weight="1",interval="180",desired="10",max="10",min="2"}
+    ANNOTATIONS {
+      summary = "Instance e2e: scale-out",
+      description = "e2e auto scale-out,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+    ALERT HPAagentIn
+    IF sum(pod_agent_active_task_count) by (resourcepool) / on(resourcepool) count(pod_agent_active_task_count) by (resourcepool) <= 0.3
+    FOR 30m
+    LABELS {serverity = "page",app="agent",trigger="hpa",action = "scale_in", deployment="{{$labels.resourcepool}}", namespace = "prod",weight="1",interval="180",desired="10",max="10",min="2"}
+    ANNOTATIONS {
+      summary = "Instance e2e: scale-in",
+      description = "e2e auto scale-in,value:{{$value}}",
+      value="{{$value}}"
+    }
+
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: hpa-rules
+  namespace: monitoring

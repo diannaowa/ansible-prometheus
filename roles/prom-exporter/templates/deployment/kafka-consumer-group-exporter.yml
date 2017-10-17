@@ -1,0 +1,32 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prom-kafka
+  namespace: monitoring
+  labels:
+    app: prom-kafka
+    component: prom-kafka
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: prom-kafka
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: "9208"
+      labels:
+        app: prom-kafka
+        component: prom-kafka
+    spec:
+      containers:
+      - image: go-nexus:5000/prom/prometheus-kafka-consumer-group-exporter:0.2.0
+        name: prom-kafka
+        args: ["-b", "10.202.129.111:9093,10.202.129.182:9093,10.202.129.220:9093"]
+        ports:
+        - name: prom-kafka
+          containerPort: 9208
+      imagePullSecrets:
+      - name: go-nexus
+      nodeSelector:
+        app: prometheus

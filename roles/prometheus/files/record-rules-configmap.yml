@@ -1,0 +1,42 @@
+apiVersion: v1
+data:
+  record.rules: |
+    # Saving the per-job HTTP in-progress request count as a new set of time series:
+    #job:http_inprogress_requests:sum = sum(http_inprogress_requests) by (job)
+    #sum(rate(container_cpu_usage_seconds_total{image!="",name=~"^k8s_.*",instance=~"^$instance$",namespace=~"^$namespace$"}[1m])) by (pod_name)
+    # Drop or rewrite labels in the result time series:
+    #new_time_series{label_to_change="new_value",label_to_drop=""} = old_time_series
+    job:container_cpu_usage_seconds_total_rate:sum=sum(rate(container_cpu_usage_seconds_total{image!="",name=~"^k8s_.*"}[1m])) by (pod_name,namespace,instance)
+    job:container_network_receive_bytes_total:sum=sum(rate(container_network_receive_bytes_total[1m])) by (image,name,instance,namespace,pod_name)
+    job:container_network_transmit_bytes_total:sum=sum(rate(container_network_transmit_bytes_total[1m])) by (image,name,instance,namespace,pod_name)
+    job:container_memory_working_set_bytes:sum=sum (container_memory_working_set_bytes{image!="",name=~"^k8s_.*"}) by (pod_name,instance,namespace)
+    job:container_fs_usage_bytes:sum=sum(container_fs_usage_bytes{image!="",name=~"^k8s_.*"}) by (pod_name,instance,namespace)
+
+    #mongodb
+    job:mongodb_op_counters_by_type:sum=sum(rate(mongodb_op_counters[1m])) by (type)
+    job:mongodb_op_counters_by_name_type:sum=sum(rate(mongodb_op_counters[1m])) by (name,type)
+    job:mongodb_network_bytesIn:sum=sum(rate(mongodb_network{type="bytesIn"}[1m])) by (name)
+    job:mongodb_network_bytesOut:sum=sum(rate(mongodb_network{type="bytesOut"}[1m])) by (name)
+    job:mongodb_op_counters=mongodb_op_counters
+
+    #redis
+    job:redis_up:sum=redis_up
+    job:redis_keyspace_hits_total:irate=irate(redis_keyspace_hits_total[5m])
+    job:redis_keyspace_misses_total:irate=irate(redis_keyspace_misses_total[5m])
+    job:redis_net_input_bytes_total:rate=rate(redis_net_input_bytes_total[5m])
+    job:redis_net_output_bytes_total:rate=rate(redis_net_output_bytes_total[5m])
+    job:redis_command_call_duration_seconds_count:top5=topk(5, irate(redis_command_call_duration_seconds_count[1m]))
+    job:redis_connected_clients=redis_connected_clients
+    job:redis_commands_processed_total:rate=rate(redis_commands_processed_total[5m])
+    job:redis_keyspace_hits_total=redis_keyspace_hits_total
+    job:redis_keyspace_misses_total=redis_keyspace_misses_total
+
+
+    #pod
+  #  job:container_cpu_usage_seconds_total_by_pod:rate=sum(rate(container_cpu_usage_seconds_total{image!="",name=~"^k8s_.*",pod_name=~"^agent-.*"}[1m])) by (namespace,pod_name)
+  #  job:container_cpu_usage_seconds_total_every_pod:rate=sum(rate(container_cpu_usage_seconds_total{image!="",name=~"^k8s_.*",pod_name=~"config-server-.*|tracing-server-.*|job-.*|pipeline-.*|scheduler-.*|executor-.*|agent-.*|api-gateway-.*|timeout-.*",container_name!="POD"}[1m])) by (namespace,container_name)
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: record-rules
+  namespace: monitoring

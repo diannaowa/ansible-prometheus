@@ -1,0 +1,83 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: am-node01
+  namespace: monitoring
+  labels:
+    app: am-node01
+spec:
+  serviceName: am-service-01
+  replicas: 1
+  template:
+    metadata:
+      name: am-node01
+      labels:
+        app: am-node01
+        run: alertmanager
+    spec:
+      imagePullSecrets:
+        - name: go-nexus
+      containers:
+      - name: am-node01
+        image: go-nexus:5000/prom/alertmanager:v0.7.1
+        #image: prom/alertmanager:v0.6.2
+        args:
+          - '-config.file=/etc/prometheus/alertmanager.conf'
+          - '-mesh.peer-id=00:00:00:00:00:01'
+          - '-mesh.nickname=am-node01'
+          - '-mesh.listen-address=:8001'
+        #  - '-mesh.peer=-mesh.peer=am-node03-0.am-service-03:8001'
+          - '-log.level=debug'
+        ports:
+        - name: webport
+          containerPort: 9093
+        - name: peerport
+          containerPort: 8001
+        resources:
+          requests:
+            cpu: 500m
+            memory: 500M
+          limits:
+            cpu: 500m
+            memory: 500M
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus
+        env:
+        - name: TZ
+          value: Asia/Chongqing
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: alertmanager-conf
+      nodeSelector:
+        app: prometheus
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: am-service-01
+  namespace: monitoring
+  labels:
+    app: am-node01
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '9093'
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 9093
+      protocol: TCP
+      name: webport
+      targetPort: 9093
+    - port: 8001
+      protocol: TCP
+      name: peerport
+      targetPort: 8001
+  selector:
+    app: am-node01

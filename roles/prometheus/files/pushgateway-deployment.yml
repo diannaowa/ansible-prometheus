@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prometheus-pushgateway
+  namespace: monitoring
+  labels:
+    app: prometheus-pushgateway
+
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: prometheus-pushgateway
+      labels:
+        app: prometheus-pushgateway
+    spec:
+      imagePullSecrets:
+        - name: go-nexus
+      containers:
+      - name: prometheus-pushgateway
+        #image: prom/prometheus:v1.6.1
+        image: prom/pushgateway:v0.4.0
+        ports:
+        - name: webui
+          containerPort: 9091
+        resources:
+          requests:
+            #cpu: 500m
+            memory: 1G
+          limits:
+            #cpu: 500m
+            memory: 1G
+        env:
+        - name: TZ
+          value: Asia/Chongqing
+
+      nodeSelector:
+        app: prometheus
